@@ -1,0 +1,9 @@
+{
+  "routes": [
+    { "path": "/", "title": "Home" },
+    { "path": "/produce/:slug", "title": "Produce detail" },
+    { "path": "/seller/:id", "title": "Grower profile" },
+    { "path": "/workspace", "title": "Marketplace workspace" },
+    { "path": "/admin", "title": "Marketplace administration" }
+  ]
+}
