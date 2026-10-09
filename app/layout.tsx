@@ -1,16 +1,11 @@
-import type { Metadata } from "next"
-import type { ReactNode } from "react"
-import "./globals.css"
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "AgroHub",
-  description: "AgroHub marketplace and farm operations platform",
+  title: 'AgroHub — Farm operations, connected',
+  description: 'A trusted workspace for farm communication, verification, transactions, and delivery tracking.',
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en"><body>{children}</body></html>
 }
