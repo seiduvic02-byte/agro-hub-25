@@ -13,5 +13,10 @@ export const startLogin = async () => {
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (error.message.toLowerCase().includes("provider is not enabled")) {
+      throw new Error("Google sign-in is disabled for this Supabase project. Enable the Google provider to continue.");
+    }
+    throw error;
+  }
 };

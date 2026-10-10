@@ -8,7 +8,9 @@ import { formatDate } from "@/lib/marketplace-format";
 import { updatePageMetadata } from "@/lib/page-metadata";
 
 function signIn() {
-  try { startLogin(); } catch { toast.error("Sign-in is not available yet."); }
+  void startLogin().catch((error: unknown) => {
+    toast.error(error instanceof Error ? error.message : "Sign-in is not available yet.");
+  });
 }
 
 export default function AdminPage() {

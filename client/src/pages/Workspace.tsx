@@ -79,13 +79,11 @@ const photoChoices = [
   ["/produce/sorghum.jpg", "Grains"],
 ] as const;
 
-function signIn() {
-  try {
-    void startLogin();
-  } catch {
-    toast.error("Sign-in is not available yet. Please try again later.");
+  function signIn() {
+  void startLogin().catch((error: unknown) => {
+  toast.error(error instanceof Error ? error.message : "Sign-in is not available yet. Please try again later.");
+  });
   }
-}
 
 function accountPath(role: string) {
   return role === "seller" ? "Farmer workspace" : "Buyer workspace";
