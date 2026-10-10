@@ -12,7 +12,7 @@ const HERO_IMAGE = "/hero/agrohub-farmer.webp";
 const LOGO_IMAGE = "/brand/mark.webp";
 
 function signIn() {
-  try { startLogin(); } catch { toast.error("Sign-in is not available yet. Please try again later."); }
+  try {   void startLogin(); } catch { toast.error("Sign-in is not available yet. Please try again later."); }
 }
 
 function Brand() {
