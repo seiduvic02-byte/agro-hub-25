@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 const SellerProfile = lazy(() => import("./pages/SellerProfile"));
 const Workspace = lazy(() => import("./pages/Workspace"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 
 function RouteLoading() {
@@ -29,7 +30,8 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/produce/:slug" component={ListingDetail} />
         <Route path="/seller/:id" component={SellerProfile} />
-        <Route path="/workspace" component={Workspace} />
+        <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/workspace" component={Workspace} />
         <Route path="/admin" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>

@@ -81,7 +81,7 @@ const photoChoices = [
 
 function signIn() {
   try {
-    startLogin();
+    void startLogin();
   } catch {
     toast.error("Sign-in is not available yet. Please try again later.");
   }

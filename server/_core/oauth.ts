@@ -4,6 +4,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { createClient } from "@supabase/supabase-js";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -11,6 +12,33 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  app.post("/api/auth/supabase", async (req: Request, res: Response) => {
+    const accessToken = typeof req.body?.accessToken === "string" ? req.body.accessToken : "";
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+    if (!accessToken || !supabaseUrl || !supabaseKey) {
+      res.status(400).json({ error: "Sign-in is not configured" });
+      return;
+    }
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data, error } = await supabase.auth.getUser(accessToken);
+      const user = data.user;
+      if (error || !user) {
+        res.status(401).json({ error: "Invalid sign-in" });
+        return;
+      }
+      const openId = `supabase:${user.id}`;
+      const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? "Agro Hub member";
+      await db.upsertUser({ openId, name, email: user.email ?? null, loginMethod: "google", lastSignedIn: new Date() });
+      const sessionToken = await sdk.createSessionToken(openId, { name, expiresInMs: ONE_YEAR_MS });
+      res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(req), maxAge: ONE_YEAR_MS });
+      res.status(204).end();
+    } catch (error) {
+      console.error("[OAuth] Supabase bridge failed", error instanceof Error ? error.message : "unknown error");
+      res.status(500).json({ error: "Sign-in failed" });
+    }
+  });
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
