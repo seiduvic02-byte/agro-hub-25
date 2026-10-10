@@ -35,7 +35,11 @@ export default function Page() {
     setAuthMessage('Connecting to Google…')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+          `${window.location.origin}/auth/callback`,
+      },
     })
     if (error) setAuthMessage('Google sign-in is not configured yet. Connect the provider in Supabase Auth to continue.')
   }
@@ -112,6 +116,14 @@ export default function Page() {
 
         {active === 'tracking' && <section className="feature-layout"><article className="panel tracking-card"><div className="panel-heading"><div><span className="kicker">LIVE FIELD LOCATION</span><h2>{tracking ? 'Your location is visible' : 'Keep deliveries on track'}</h2></div><span className={`tracking-status ${tracking ? 'on' : ''}`}><span className="status-dot" />{tracking ? 'Live' : 'Off'}</span></div><div className="large-map"><div className="map-grid" /><span className="map-pin large"><MapPin size={30} /></span><span className="map-label large-label">{location}</span></div><button className="primary-button" onClick={toggleTracking}>{tracking ? 'Stop sharing location' : 'Share live location'} <span>{tracking ? '×' : '→'}</span></button></article><aside className="panel side-panel"><span className="kicker">PRIVACY CONTROLS</span><h3>You stay in control</h3><p>Location sharing is off by default and can be stopped at any time. Only active delivery participants can see it.</p><div className="check-row"><ShieldCheck size={16} />Private by default</div><div className="check-row"><MapPin size={16} />Shared only during delivery</div></aside></section>}
       </section>
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        {navItems.slice(0, 4).map(({ id, label, icon: Icon }) => (
+          <button key={id} className={active === id ? 'active' : ''} onClick={() => setActive(id)}>
+            <Icon size={18} />
+            <span>{label === 'KYC verification' ? 'KYC' : label.split(' ')[0]}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   )
 }
