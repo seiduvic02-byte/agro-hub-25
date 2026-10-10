@@ -5,7 +5,8 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
-  const next = url.searchParams.get('next') ?? '/'
+  const nextParam = url.searchParams.get('next')
+  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/'
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
