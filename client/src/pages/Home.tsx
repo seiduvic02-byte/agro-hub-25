@@ -12,9 +12,45 @@ const HERO_IMAGE = "/hero/agrohub-farmer.webp";
 const LOGO_IMAGE = "/brand/mark.webp";
 
 function signIn() {
+  window.dispatchEvent(new CustomEvent("agrohub:signin"));
+}
+
+function beginGoogleSignIn() {
   void startLogin().catch((error: unknown) => {
     toast.error(error instanceof Error ? error.message : "Sign-in is not available yet. Please try again later.");
   });
+}
+
+function SignInDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  return <div className="signin-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="signin-dialog" role="dialog" aria-modal="true" aria-labelledby="signin-title">
+      <button className="signin-close" type="button" onClick={onClose} aria-label="Close sign-in dialog"><X size={18} /></button>
+      <div className="signin-dialog-art"><span className="signin-art-orbit" /><span className="signin-art-leaf"><Leaf size={28} /></span><small>GROWN<br />WITH<br />CARE</small></div>
+      <div className="signin-dialog-content">
+        <span className="eyebrow">WELCOME TO AGRO HUB</span>
+        <h2 id="signin-title">Source with<br /><em>confidence.</em></h2>
+        <p className="signin-intro">Sign in to message growers, save suppliers and keep every request in one calm, clear workspace.</p>
+        <button className="signin-google-button" type="button" onClick={beginGoogleSignIn}><span className="google-mark" aria-hidden="true">G</span><span>Continue with Google</span><ArrowRight size={16} /></button>
+        <div className="signin-rule"><span>or continue with email</span></div>
+        <form className="signin-email-form" onSubmit={event => { event.preventDefault(); toast.message("Email sign-in is coming soon. Use Google to continue for now."); }}>
+          <label>Email address<input type="email" placeholder="you@example.com" required /></label>
+          <button className="button button-outline button-wide" type="submit">Continue with email <ArrowRight size={15} /></button>
+        </form>
+        <p className="signin-legal">By continuing, you agree to Agro Hub&apos;s <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
+      </div>
+    </section>
+  </div>;
+}
+
+function useSignInDialog() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const openDialog = () => setOpen(true);
+    window.addEventListener("agrohub:signin", openDialog);
+    return () => window.removeEventListener("agrohub:signin", openDialog);
+  }, []);
+  return { open, close: () => setOpen(false) };
 }
 
 function Brand() {
@@ -67,6 +103,7 @@ function UseStep({ number, title, description, icon: Icon }: { number: string; t
 }
 
 export default function Home() {
+  const signInDialog = useSignInDialog();
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("");
@@ -173,6 +210,7 @@ export default function Home() {
     </main>
     <footer className="site-footer"><div className="page-wrap footer-inner"><Brand /><p>Growing closer, from farm to market.</p><div className="footer-links"><a href="/#marketplace">Explore produce</a><a href="/#how-it-works">How it works</a><a href="/workspace">Join Agro Hub</a></div><span className="footer-copy">© {new Date().getFullYear()} Agro Hub · Made for Nigerian agriculture</span></div></footer>
     <RequestDialog item={requestItem} onClose={() => setRequestItem(null)} />
+    <SignInDialog open={signInDialog.open} onClose={signInDialog.close} />
   </div>;
 }
 import { updatePageMetadata } from "@/lib/page-metadata";
