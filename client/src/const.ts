@@ -9,7 +9,9 @@ export const startLogin = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback`,
+      redirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL ??
+        import.meta.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+        `${window.location.origin}/auth/callback`,
     },
   });
 

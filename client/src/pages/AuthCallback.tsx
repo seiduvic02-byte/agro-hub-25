@@ -12,13 +12,37 @@ export default function AuthCallback() {
         navigate("/?auth_error=not_configured", { replace: true });
         return;
       }
-      const code = new URLSearchParams(window.location.search).get("code");
-      const { data, error } = code
-        ? await supabase.auth.exchangeCodeForSession(code)
-        : await supabase.auth.getSession();
+      const params = new URLSearchParams(window.location.search);
+      const oauthError = params.get("error_description") ?? params.get("error");
+      if (oauthError) {
+        if (!cancelled) navigate(`/?auth_error=${encodeURIComponent(oauthError)}`, { replace: true });
+        return;
+      }
+
+      const code = params.get("code");
+      let data: { session: { access_token: string } | null };
+      let error: { message: string } | null = null;
+      if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        data = result.data;
+        error = result.error;
+      } else {
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const accessTokenFromHash = hashParams.get("access_token");
+        const refreshTokenFromHash = hashParams.get("refresh_token");
+        if (accessTokenFromHash && refreshTokenFromHash) {
+          const result = await supabase.auth.setSession({ access_token: accessTokenFromHash, refresh_token: refreshTokenFromHash });
+          data = result.data;
+          error = result.error;
+        } else {
+          const result = await supabase.auth.getSession();
+          data = result.data;
+          error = result.error;
+        }
+      }
       const accessToken = data.session?.access_token;
       if (error || !accessToken) {
-        if (!cancelled) navigate("/?auth_error=sign_in_failed", { replace: true });
+        if (!cancelled) navigate(`/?auth_error=${encodeURIComponent(error?.message ?? "sign_in_failed")}`, { replace: true });
         return;
       }
       const response = await fetch("/api/auth/supabase", {
