@@ -647,6 +647,7 @@ function OrderCard({
 }
 
 export default function Workspace() {
+  const [profileType, setProfileType] = useState<"farmer" | "buyer">("farmer");
   const auth = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
@@ -834,19 +835,24 @@ export default function Workspace() {
             Sign in to your <em>workspace.</em>
           </h1>
           <p>
-            Manage your farmer or buyer profile, listings, requests, orders and
-            conversations.
+            Choose the profile you want to use, then continue securely with Google.
+            Your workspace adapts to the way you participate in the marketplace.
           </p>
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={signIn}
-          >
-            Sign in with Manus <ArrowRight size={16} />
+          <div className="profile-choice-grid" role="group" aria-label="Choose a profile">
+            <button type="button" className={`profile-choice ${profileType === "farmer" ? "selected" : ""}`} onClick={() => setProfileType("farmer")} aria-pressed={profileType === "farmer"}>
+              <Sprout size={19} />
+              <span><strong>Farmer</strong><small>List harvest and manage requests</small></span>
+            </button>
+            <button type="button" className={`profile-choice ${profileType === "buyer" ? "selected" : ""}`} onClick={() => setProfileType("buyer")} aria-pressed={profileType === "buyer"}>
+              <ShoppingBasket size={19} />
+              <span><strong>Buyer</strong><small>Source produce and track orders</small></span>
+            </button>
+          </div>
+          <button type="button" className="button button-primary" onClick={signIn}>
+            Continue with Google <ArrowRight size={16} />
           </button>
-          <Link className="text-link" href="/">
-            Back to explore produce
-          </Link>
+          <span className="signin-provider-note">Your {profileType} profile will be ready after sign-in.</span>
+          <Link className="text-link" href="/">Back to explore produce</Link>
         </div>
       </div>
     );
