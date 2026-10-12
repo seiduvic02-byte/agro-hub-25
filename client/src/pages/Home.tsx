@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BookOpen, Heart, Leaf, MapPin, Menu, Search, ShieldCheck, ShoppingBasket, Sprout, Users, Wheat, X } from "lucide-react";
 import { toast } from "sonner";
 import { startLogin } from "@/const";
-import { supabase } from "@/lib/supabase";
+import { supabase, syncSupabaseSession } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import { formatNaira, perUnitLabel } from "@/lib/marketplace-format";
 import { exampleListings, marketplaceCategories, type MarketplaceItem } from "@shared/marketplace";
@@ -62,10 +62,15 @@ function SignInDialog({ open, onClose }: { open: boolean; onClose: () => void })
       else toast.error("We could not complete that request. Please try again.");
       return;
     }
-    if (mode === "signup") {
+    if (mode === "signup" && !result.data.session) {
       toast.success("Account created. Check your email to confirm your account.");
       setMode("signin");
       setPassword("");
+      return;
+    }
+    const synced = await syncSupabaseSession(result.data.session?.access_token);
+    if (!synced) {
+      toast.error("Sign-in succeeded, but your workspace session could not be started. Please try again.");
       return;
     }
     onClose();

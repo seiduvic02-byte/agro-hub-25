@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { supabase } from "@/lib/supabase";
+import { supabase, syncSupabaseSession } from "@/lib/supabase";
 import PrivacyCenter from "@/components/PrivacyCenter";
 import { formatDate, formatNaira } from "@/lib/marketplace-format";
 import { marketplaceCategories } from "@shared/marketplace";
@@ -803,6 +803,11 @@ export default function Workspace() {
     if (result.error) {
       const message = result.error.message.toLowerCase();
       toast.error(message.includes("email not confirmed") ? "Please confirm your email before signing in." : message.includes("invalid login credentials") ? "Invalid email or password." : "We could not complete sign-in. Please try again.");
+      return;
+    }
+    const synced = await syncSupabaseSession(result.data.session?.access_token);
+    if (!synced) {
+      toast.error("Sign-in succeeded, but your workspace session could not be started. Please try again.");
       return;
     }
     window.location.reload();
