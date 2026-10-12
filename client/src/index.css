@@ -476,6 +476,11 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 .profile-choice small { color: #78857b; font-size: 10px; line-height: 1.45; }
 .profile-choice-arrow { color: #7c9b79; }
 .profile-continue { width: 100%; justify-content: center; }
+.profile-email-form { display: grid; gap: 10px; width: 100%; }
+.profile-email-form label { display: grid; gap: 5px; color: var(--green-900); font-size: 10px; font-weight: 750; text-align: left; }
+.profile-email-form input { height: 42px; padding: 0 12px; border: 1px solid #dfe7da; border-radius: 7px; outline: none; background: #fbfcf8; color: var(--ink); font: inherit; font-size: 12px; }
+.profile-email-form input:focus { border-color: #86a17d; box-shadow: 0 0 0 3px #e8f0e4; }
+.profile-email-form button:disabled { cursor: wait; opacity: .7; }
 .signin-provider-note { color: #879188; font-size: 10px; }
 @media (max-width: 520px) { .profile-choice-grid { grid-template-columns: 1fr; } .workspace-signin-card { padding: 28px 22px; } .workspace-signin-card h1 { font-size: 31px; } }
 .workspace-loading { display: grid; min-height: 100vh; place-content: center; justify-items: center; gap: 12px; background: #f7f6ef; color: #748074; font-size: 12px; }
