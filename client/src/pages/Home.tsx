@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BookOpen, Heart, Leaf, MapPin, Menu, Search, ShieldCheck, ShoppingBasket, Sprout, Users, Wheat, X } from "lucide-react";
 import { toast } from "sonner";
 import { startLogin } from "@/const";
+import { supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import { formatNaira, perUnitLabel } from "@/lib/marketplace-format";
 import { exampleListings, marketplaceCategories, type MarketplaceItem } from "@shared/marketplace";
@@ -22,21 +24,70 @@ function beginGoogleSignIn() {
 }
 
 function SignInDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setMode("signin");
+      setEmail("");
+      setPassword("");
+      setBusy(false);
+    }
+  }, [open]);
+
   if (!open) return null;
+
+  async function submitEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) {
+      toast.error("Sign-in is temporarily unavailable. Please try again later.");
+      return;
+    }
+    setBusy(true);
+    const redirectTo = import.meta.env.VITE_SUPABASE_REDIRECT_URL ??
+      import.meta.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+      `${window.location.origin}/auth/callback`;
+    const result = mode === "signup"
+      ? await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: redirectTo } })
+      : await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (result.error) {
+      const message = result.error.message.toLowerCase();
+      if (message.includes("email not confirmed")) toast.error("Please confirm your email before signing in.");
+      else if (message.includes("invalid login credentials")) toast.error("Invalid email or password.");
+      else if (message.includes("password") && message.includes("character")) toast.error("Use a password with at least 6 characters.");
+      else toast.error("We could not complete that request. Please try again.");
+      return;
+    }
+    if (mode === "signup") {
+      toast.success("Account created. Check your email to confirm your account.");
+      setMode("signin");
+      setPassword("");
+      return;
+    }
+    onClose();
+    window.location.assign("/workspace");
+  }
+
   return <div className="signin-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="signin-dialog" role="dialog" aria-modal="true" aria-labelledby="signin-title">
       <button className="signin-close" type="button" onClick={onClose} aria-label="Close sign-in dialog"><X size={18} /></button>
       <div className="signin-dialog-art"><span className="signin-art-orbit" /><span className="signin-art-leaf"><Leaf size={28} /></span><small>GROWN<br />WITH<br />CARE</small></div>
       <div className="signin-dialog-content">
         <span className="eyebrow">WELCOME TO AGRO HUB</span>
-        <h2 id="signin-title">Source with<br /><em>confidence.</em></h2>
-        <p className="signin-intro">Sign in to message growers, save suppliers and keep every request in one calm, clear workspace.</p>
-        <button className="signin-google-button" type="button" onClick={beginGoogleSignIn}><span className="google-mark" aria-hidden="true">G</span><span>Continue with Google</span><ArrowRight size={16} /></button>
-        <div className="signin-rule"><span>or continue with email</span></div>
-        <form className="signin-email-form" onSubmit={event => { event.preventDefault(); toast.message("Email sign-in is coming soon. Use Google to continue for now."); }}>
-          <label>Email address<input type="email" placeholder="you@example.com" required /></label>
-          <button className="button button-outline button-wide" type="submit">Continue with email <ArrowRight size={15} /></button>
+        <h2 id="signin-title">{mode === "signin" ? <>Source with<br /><em>confidence.</em></> : <>Join the<br /><em>movement.</em></>}</h2>
+        <p className="signin-intro">{mode === "signin" ? "Sign in to message growers, save suppliers and keep every request in one calm, clear workspace." : "Create your account to connect with growers, buyers and a better way to move food."}</p>
+        <button className="signin-google-button" type="button" onClick={beginGoogleSignIn} disabled={busy}><span className="google-mark" aria-hidden="true">G</span><span>Continue with Google</span><ArrowRight size={16} /></button>
+        <div className="signin-rule"><span>or use email</span></div>
+        <form className="signin-email-form" onSubmit={submitEmail}>
+          <label>Email address<input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
+          <label>Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 6 characters" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={6} required /></label>
+          <button className="button button-outline button-wide" type="submit" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"} {!busy && <ArrowRight size={15} />}</button>
         </form>
+        <button className="signin-mode-toggle" type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>{mode === "signin" ? "New to Agro Hub? Create an account" : "Already have an account? Sign in"}</button>
         <p className="signin-legal">By continuing, you agree to Agro Hub&apos;s <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
       </div>
     </section>
