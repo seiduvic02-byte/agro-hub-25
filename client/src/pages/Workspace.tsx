@@ -25,8 +25,8 @@ import {
   Wheat,
 } from "lucide-react";
 import { toast } from "sonner";
-import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import PrivacyCenter from "@/components/PrivacyCenter";
 import { formatDate, formatNaira } from "@/lib/marketplace-format";
 import { marketplaceCategories } from "@shared/marketplace";
@@ -79,13 +79,7 @@ const photoChoices = [
   ["/produce/sorghum.jpg", "Grains"],
 ] as const;
 
-  function signIn() {
-  void startLogin().catch((error: unknown) => {
-  toast.error(error instanceof Error ? error.message : "Sign-in is not available yet. Please try again later.");
-  });
-  }
-
-function accountPath(role: string) {
+  function accountPath(role: string) {
   return role === "seller" ? "Farmer workspace" : "Buyer workspace";
 }
 
@@ -648,6 +642,9 @@ function OrderCard({
 
 export default function Workspace() {
   const [profileType, setProfileType] = useState<"farmer" | "buyer">("farmer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signInBusy, setSignInBusy] = useState(false);
   const auth = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
@@ -794,6 +791,22 @@ export default function Workspace() {
     },
   });
   const currentProfile = profile.data;
+  async function submitEmailSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) {
+      toast.error("Sign-in is temporarily unavailable. Please try again later.");
+      return;
+    }
+    setSignInBusy(true);
+    const result = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setSignInBusy(false);
+    if (result.error) {
+      const message = result.error.message.toLowerCase();
+      toast.error(message.includes("email not confirmed") ? "Please confirm your email before signing in." : message.includes("invalid login credentials") ? "Invalid email or password." : "We could not complete sign-in. Please try again.");
+      return;
+    }
+    window.location.reload();
+  }
   const navItems = useMemo(() => {
     const common: { id: WorkspaceTab; label: string; icon: typeof Store }[] = [
       { id: "overview", label: "Overview", icon: Store },
@@ -835,7 +848,7 @@ export default function Workspace() {
             How will you <em>participate?</em>
           </h1>
           <p>
-            Choose the profile that best fits you. You can switch between farmer and buyer tools whenever you need.
+            Choose your profile, then sign in securely with your email and password.
           </p>
           <div className="profile-choice-grid profile-selection-grid" role="group" aria-label="Choose a profile">
             <button type="button" className={`profile-choice ${profileType === "farmer" ? "selected" : ""}`} onClick={() => setProfileType("farmer")} aria-pressed={profileType === "farmer"}>
@@ -849,10 +862,14 @@ export default function Workspace() {
               <ArrowRight className="profile-choice-arrow" size={16} />
             </button>
           </div>
-          <button type="button" className="button button-primary profile-continue" onClick={signIn}>
-            Continue as {profileType === "farmer" ? "a farmer" : "a buyer"} <ArrowRight size={16} />
-          </button>
-          <span className="signin-provider-note">Secure sign-in continues with Google.</span>
+          <form className="profile-email-form" onSubmit={submitEmailSignIn}>
+            <label>Email address<input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
+            <label>Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Your password" autoComplete="current-password" required /></label>
+            <button type="submit" className="button button-primary profile-continue" disabled={signInBusy}>
+              {signInBusy ? "Signing in…" : `Sign in as ${profileType === "farmer" ? "a farmer" : "a buyer"}`} {!signInBusy && <ArrowRight size={16} />}
+            </button>
+          </form>
+          <span className="signin-provider-note">Use the email and password linked to your Agro Hub account.</span>
           <Link className="text-link" href="/">Return to explore produce</Link>
         </div>
       </div>
