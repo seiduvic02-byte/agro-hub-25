@@ -830,29 +830,30 @@ export default function Workspace() {
           <span className="workspace-brand-icon">
             <Sprout size={25} />
           </span>
-          <span className="eyebrow">YOUR MARKETPLACE, YOUR TERMS</span>
+          <span className="eyebrow">WELCOME TO AGRO HUB</span>
           <h1>
-            Sign in to your <em>workspace.</em>
+            How will you <em>participate?</em>
           </h1>
           <p>
-            Choose the profile you want to use, then continue securely with Google.
-            Your workspace adapts to the way you participate in the marketplace.
+            Choose the profile that best fits you. You can switch between farmer and buyer tools whenever you need.
           </p>
-          <div className="profile-choice-grid" role="group" aria-label="Choose a profile">
+          <div className="profile-choice-grid profile-selection-grid" role="group" aria-label="Choose a profile">
             <button type="button" className={`profile-choice ${profileType === "farmer" ? "selected" : ""}`} onClick={() => setProfileType("farmer")} aria-pressed={profileType === "farmer"}>
-              <Sprout size={19} />
-              <span><strong>Farmer</strong><small>List harvest and manage requests</small></span>
+              <span className="profile-choice-icon"><Sprout size={22} /></span>
+              <span><strong>Farmer</strong><small>List your harvest, respond to enquiries and manage orders.</small></span>
+              <ArrowRight className="profile-choice-arrow" size={16} />
             </button>
             <button type="button" className={`profile-choice ${profileType === "buyer" ? "selected" : ""}`} onClick={() => setProfileType("buyer")} aria-pressed={profileType === "buyer"}>
-              <ShoppingBasket size={19} />
-              <span><strong>Buyer</strong><small>Source produce and track orders</small></span>
+              <span className="profile-choice-icon"><ShoppingBasket size={22} /></span>
+              <span><strong>Buyer</strong><small>Discover growers, request produce and track your orders.</small></span>
+              <ArrowRight className="profile-choice-arrow" size={16} />
             </button>
           </div>
-          <button type="button" className="button button-primary" onClick={signIn}>
-            Continue with Google <ArrowRight size={16} />
+          <button type="button" className="button button-primary profile-continue" onClick={signIn}>
+            Continue as {profileType === "farmer" ? "a farmer" : "a buyer"} <ArrowRight size={16} />
           </button>
-          <span className="signin-provider-note">Your {profileType} profile will be ready after sign-in.</span>
-          <Link className="text-link" href="/">Back to explore produce</Link>
+          <span className="signin-provider-note">Secure sign-in continues with Google.</span>
+          <Link className="text-link" href="/">Return to explore produce</Link>
         </div>
       </div>
     );
