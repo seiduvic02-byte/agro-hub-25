@@ -30,7 +30,8 @@ export function registerOAuthRoutes(app: Express) {
       }
       const openId = `supabase:${user.id}`;
       const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? "Agro Hub member";
-      await db.upsertUser({ openId, name, email: user.email ?? null, loginMethod: "google", lastSignedIn: new Date() });
+      const loginMethod = user.app_metadata?.provider === "google" ? "google" : "email";
+      await db.upsertUser({ openId, name, email: user.email ?? null, loginMethod, lastSignedIn: new Date() });
       const sessionToken = await sdk.createSessionToken(openId, { name, expiresInMs: ONE_YEAR_MS });
       res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(req), maxAge: ONE_YEAR_MS });
       res.status(204).end();
