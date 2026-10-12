@@ -13,6 +13,7 @@ const SellerProfile = lazy(() => import("./pages/SellerProfile"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
+const PriceIntelligence = lazy(() => import("./pages/PriceIntelligence"));
 
 function RouteLoading() {
   return (
@@ -32,6 +33,7 @@ function Router() {
         <Route path="/seller/:id" component={SellerProfile} />
         <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/workspace" component={Workspace} />
+        <Route path="/prices" component={PriceIntelligence} />
         <Route path="/admin" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>

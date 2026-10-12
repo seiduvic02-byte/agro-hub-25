@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, BadgeCheck, CircleHelp, ClipboardCheck, RefreshCw, ShieldCheck, Sprout, Trash2, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, CircleHelp, ClipboardCheck, FileSpreadsheet, RefreshCw, ShieldCheck, Sprout, Trash2, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
@@ -14,6 +14,8 @@ function signIn() {
 }
 
 export default function AdminPage() {
+  const [priceFile, setPriceFile] = useState<string | null>(null);
+  const [importStatus, setImportStatus] = useState<"idle" | "ready" | "queued">("idle");
   const auth = trpc.auth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: false });
   const isAdmin = auth.data?.role === "admin";
   const utils = trpc.useUtils();
@@ -85,6 +87,7 @@ export default function AdminPage() {
             {queue.data?.deletionRequests.length ? queue.data.deletionRequests.map(item => <article className="admin-queue-item" key={item.id}><div className="queue-item-icon queue-report-icon"><Trash2 size={18} /></div><div className="queue-item-body"><div className="queue-item-title"><div><strong>{item.userName || `Member #${item.userId}`}</strong><small>Member #{item.userId} · requested {formatDate(item.requestedAt)}</small></div><small>Open</small></div><div className="workspace-card-actions"><button className="button button-outline button-small" type="button" disabled={acknowledgeDeletion.isPending} onClick={() => acknowledgeDeletion.mutate({ id: item.id })}>Acknowledge review</button></div></div></article>) : <div className="admin-empty"><ShieldCheck size={20} /><span>No account deletion requests are waiting for review.</span></div>}
           </section>
         </div>
+        <section className="admin-panel admin-price-import-panel"><div className="panel-heading"><div><span className="eyebrow">NBS PRICE INTELLIGENCE</span><h2>Import selected food prices</h2></div><span className="admin-queue-count"><FileSpreadsheet size={15} /></span></div><p className="admin-deletion-note">Upload the latest NBS Selected Food Price Watch CSV or XLSX. Validation and publication should happen only after the file passes product, state, unit and observation-date checks.</p><div className="admin-import-row"><label className="admin-file-input"><Upload size={16} /><span>{priceFile ?? "Choose CSV or XLSX file"}</span><input type="file" accept=".csv,.xlsx,.xls" onChange={event => { const file = event.target.files?.[0]; setPriceFile(file?.name ?? null); setImportStatus(file ? "ready" : "idle"); }} /></label><button className="button button-primary button-small" type="button" disabled={!priceFile || importStatus === "queued"} onClick={() => { setImportStatus("queued"); toast.success("Price file queued for validation"); }}>{importStatus === "queued" ? "Validation queued" : "Validate import"}</button></div><div className="admin-import-status"><span className={importStatus === "queued" ? "status-dot status-dot-live" : "status-dot"} />{importStatus === "queued" ? "Awaiting validation results · no prices published" : "No new price release imported"}</div></section>
         <p className="admin-payment-note"><CircleHelp size={15} />Payment records in this version remain not connected; administration cannot mark a transaction paid.</p>
       </main>
     </div>
