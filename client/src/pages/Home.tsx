@@ -124,7 +124,7 @@ function Header() {
         <a href="/#marketplace">Explore produce</a>
         <a href="/#how-it-works">How it works</a>
         <a href="/#for-farmers">For farmers</a>
-        {auth.data ? <Link href="/workspace" className="nav-workspace">My workspace <ArrowUpRight size={15} /></Link> : <button className="nav-login" type="button" onClick={signIn}>Sign in</button>}
+        {auth.data ? <Link href="/workspace" className="nav-workspace">My profile <ArrowUpRight size={15} /></Link> : <button className="nav-login" type="button" onClick={signIn}>Sign into profile</button>}
         <a className="button button-primary nav-cta" href="/workspace">List your harvest <ArrowRight size={16} /></a>
       </nav>
     </div>
