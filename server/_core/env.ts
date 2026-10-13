@@ -2,7 +2,7 @@
 export const ENV = {
   get appId() { return process.env.MANUS_PROJECT_ID ?? "agro-hub"; },
   get cookieSecret() {
-    return process.env.MANUS_JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "";
+    return process.env.MANUS_JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "agro-hub-development-session-secret";
   },
   get databaseUrl() { return process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? ""; },
   get oAuthServerUrl() { return process.env.MANUS_OAUTH_API_URL ?? ""; },
