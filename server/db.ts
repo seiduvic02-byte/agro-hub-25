@@ -25,8 +25,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     throw new Error("User openId is required for upsert");
   }
 
-  const db = await getDb();
-  if (!db) {
+  const saveRuntimeUser = () => {
     const now = new Date();
     const existing = runtimeUsers.get(user.openId);
     runtimeUsers.set(user.openId, {
@@ -40,6 +39,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updatedAt: now,
       lastSignedIn: user.lastSignedIn ?? now,
     });
+  };
+
+  const db = await getDb();
+  if (!db) {
+    saveRuntimeUser();
     return;
   }
 
@@ -86,8 +90,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       set: updateSet,
     });
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+    console.warn("[Database] Falling back to runtime session user:", error instanceof Error ? error.message : "unknown error");
+    saveRuntimeUser();
   }
 }
 
