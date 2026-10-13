@@ -7,7 +7,7 @@ export const supabase =
   supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 export async function syncSupabaseSession(accessToken?: string) {
-  const token = accessToken ?? (await supabase?.auth.getSession()).data.session?.access_token;
+  const token = accessToken ?? (await supabase?.auth.getSession())?.data.session?.access_token;
   if (!token) return false;
   const response = await fetch("/api/auth/supabase", {
     method: "POST",
