@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import CookiePreferences from "@/components/CookiePreferences";
 import Home from "./pages/Home";
+import PolicyPage from "./pages/PolicyPage";
 
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 const SellerProfile = lazy(() => import("./pages/SellerProfile"));
@@ -32,7 +33,9 @@ function Router() {
         <Route path="/produce/:slug" component={ListingDetail} />
         <Route path="/seller/:id" component={SellerProfile} />
         <Route path="/auth/callback" component={AuthCallback} />
-      <Route path="/workspace" component={Workspace} />
+        <Route path="/privacy" component={PolicyPage} />
+        <Route path="/terms" component={PolicyPage} />
+        <Route path="/workspace" component={Workspace} />
         <Route path="/prices" component={PriceIntelligence} />
         <Route path="/admin" component={AdminPage} />
         <Route component={NotFound} />
