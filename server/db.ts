@@ -4,6 +4,8 @@ import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+const runtimeUsers = new Map<string, User>();
+let nextRuntimeUserId = -1;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -25,7 +27,20 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const db = await getDb();
   if (!db) {
-    throw new Error("Database is not available");
+    const now = new Date();
+    const existing = runtimeUsers.get(user.openId);
+    runtimeUsers.set(user.openId, {
+      id: existing?.id ?? nextRuntimeUserId--,
+      openId: user.openId,
+      name: user.name ?? existing?.name ?? null,
+      email: user.email ?? existing?.email ?? null,
+      loginMethod: user.loginMethod ?? existing?.loginMethod ?? null,
+      role: user.role ?? existing?.role ?? "user",
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      lastSignedIn: user.lastSignedIn ?? now,
+    });
+    return;
   }
 
   try {
@@ -79,8 +94,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
+    return runtimeUsers.get(openId);
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
