@@ -1,5 +1,9 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
+
+// Vercel project variables are mirrored here for the custom Express/Vite server.
+dotenv.config({ path: ".env.development.local" });
+dotenv.config();
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
