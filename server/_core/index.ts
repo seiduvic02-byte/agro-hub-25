@@ -26,6 +26,7 @@ function escapeXml(value: string) {
 
 async function startServer() {
   const app = express();
+  app.set("trust proxy", true);
   const server = createServer(app);
   app.use("/api", (_req, res, next) => {
     res.setHeader("Cache-Control", "private, no-store, max-age=0");
