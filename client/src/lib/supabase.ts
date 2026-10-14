@@ -9,11 +9,19 @@ export const supabase =
 export async function syncSupabaseSession(accessToken?: string) {
   const token = accessToken ?? (await supabase?.auth.getSession())?.data.session?.access_token;
   if (!token) return false;
-  const response = await fetch("/api/auth/supabase", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ accessToken: token }),
-  });
-  return response.ok;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch("/api/auth/supabase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ accessToken: token }),
+      });
+      if (response.ok) return true;
+    } catch (error) {
+      console.warn("[v0] Workspace session sync failed", error);
+    }
+    if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  return false;
 }
