@@ -18,7 +18,8 @@ export async function syncSupabaseSession(accessToken?: string) {
         body: JSON.stringify({ accessToken: token }),
       });
       if (response.ok) return true;
-      console.warn("[v0] Workspace session sync rejected", response.status);
+      const details = await response.json().catch(() => null);
+      console.warn("[v0] Workspace session sync rejected", response.status, details?.error ?? "unknown error");
     } catch (error) {
       console.warn("[v0] Workspace session sync failed", error);
     }
