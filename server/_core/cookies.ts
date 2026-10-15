@@ -2,7 +2,8 @@ import type { CookieOptions, Request } from "express";
 
 export function getSessionCookieOptions(req: Request): CookieOptions {
   const forwardedProto = req.headers["x-forwarded-proto"];
-  const isHttps = forwardedProto === "http" || (Array.isArray(forwardedProto) && forwardedProto.includes("http")) ? false : true;
+  const forwardedProtocol = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto;
+  const isHttps = req.secure || forwardedProtocol === "https";
   return {
     httpOnly: true,
     path: "/",
