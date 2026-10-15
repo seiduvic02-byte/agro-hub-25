@@ -7,6 +7,22 @@ let _db: ReturnType<typeof drizzle> | null = null;
 const runtimeUsers = new Map<string, User>();
 let nextRuntimeUserId = -1;
 
+function saveRuntimeUser(user: InsertUser) {
+  const now = new Date();
+  const existing = runtimeUsers.get(user.openId);
+  runtimeUsers.set(user.openId, {
+    id: existing?.id ?? nextRuntimeUserId--,
+    openId: user.openId,
+    name: user.name ?? existing?.name ?? null,
+    email: user.email ?? existing?.email ?? null,
+    loginMethod: user.loginMethod ?? existing?.loginMethod ?? null,
+    role: user.role ?? existing?.role ?? "user",
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+    lastSignedIn: user.lastSignedIn ?? now,
+  });
+}
+
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
@@ -26,25 +42,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     throw new Error("User openId is required for upsert");
   }
 
-  const saveRuntimeUser = () => {
-    const now = new Date();
-    const existing = runtimeUsers.get(user.openId);
-    runtimeUsers.set(user.openId, {
-      id: existing?.id ?? nextRuntimeUserId--,
-      openId: user.openId,
-      name: user.name ?? existing?.name ?? null,
-      email: user.email ?? existing?.email ?? null,
-      loginMethod: user.loginMethod ?? existing?.loginMethod ?? null,
-      role: user.role ?? existing?.role ?? "user",
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-      lastSignedIn: user.lastSignedIn ?? now,
-    });
-  };
-
+  saveRuntimeUser(user);
   const db = await getDb();
   if (!db) {
-    saveRuntimeUser();
+    saveRuntimeUser(user);
     return;
   }
 
@@ -92,11 +93,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     });
   } catch (error) {
     console.warn("[Database] Falling back to runtime session user:", error instanceof Error ? error.message : "unknown error");
-    saveRuntimeUser();
+    saveRuntimeUser(user);
   }
 }
 
 export async function getUserByOpenId(openId: string) {
+  const cachedUser = runtimeUsers.get(openId);
+  if (cachedUser) return cachedUser;
   const db = await getDb();
   if (!db) {
     return runtimeUsers.get(openId);
