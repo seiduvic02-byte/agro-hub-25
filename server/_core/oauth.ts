@@ -15,23 +15,38 @@ export function registerOAuthRoutes(app: Express) {
   app.post("/api/auth/supabase", async (req: Request, res: Response) => {
     const accessToken = typeof req.body?.accessToken === "string" ? req.body.accessToken : "";
     const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!accessToken || !supabaseUrl || !supabaseKey) {
+    const supabaseKeys = [
+      process.env.SUPABASE_SECRET_KEY,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      process.env.SUPABASE_PUBLISHABLE_KEY,
+      process.env.SUPABASE_ANON_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    ].filter((key): key is string => Boolean(key));
+    if (!accessToken || !supabaseUrl || supabaseKeys.length === 0) {
       res.status(400).json({ error: "Sign-in is not configured" });
       return;
     }
     try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data, error } = await supabase.auth.getUser(accessToken);
-      const user = data.user;
-      if (error || !user) {
+      let user: Awaited<ReturnType<ReturnType<typeof createClient>["auth"]["getUser"]>>["data"]["user"] = null;
+      for (const supabaseKey of supabaseKeys) {
+        const result = await createClient(supabaseUrl, supabaseKey).auth.getUser(accessToken);
+        if (!result.error && result.data.user) {
+          user = result.data.user;
+          break;
+        }
+      }
+      if (!user) {
         res.status(401).json({ error: "Invalid sign-in" });
         return;
       }
       const openId = `supabase:${user.id}`;
       const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? "Agro Hub member";
       const loginMethod = user.app_metadata?.provider === "google" ? "google" : "email";
-      await db.upsertUser({ openId, name, email: user.email ?? null, loginMethod, lastSignedIn: new Date() });
+      const userRecord = { openId, name, email: user.email ?? null, loginMethod, lastSignedIn: new Date() };
+      void db.upsertUser(userRecord).catch(error => {
+        console.warn("[OAuth] Background user persistence failed", error instanceof Error ? error.message : "unknown error");
+      });
       const sessionToken = await sdk.createSessionToken(openId, { name, expiresInMs: ONE_YEAR_MS });
       res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(req), maxAge: ONE_YEAR_MS });
       res.status(204).end();
